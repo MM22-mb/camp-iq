@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(npx vitest:*)",
+      "Bash(npm run:*)",
+      "Bash(mkdir -p \"src/app/\\(protected\\)/dashboard\" \"src/app/\\(protected\\)/profile\" \"src/app/\\(protected\\)/trips/new\" \"src/app/\\(protected\\)/explore\")",
+      "Bash(mv src/app/dashboard/page.tsx \"src/app/\\(protected\\)/dashboard/page.tsx\")",
+      "Bash(rm -rf src/app/dashboard src/app/profile src/app/trips src/app/explore)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(taskkill /PID 11796 /F)"
+    ]
+  }
+}
