@@ -27,10 +27,11 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <main className="flex-1">
-        <section className="container mx-auto max-w-7xl px-4 py-24 text-center">
+        <section className="bg-gradient-to-b from-accent/50 to-background">
+          <div className="container mx-auto max-w-7xl px-4 py-24 text-center">
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
             Plan your perfect
-            <span className="text-green-600"> camping trip</span>
+            <span className="text-primary"> camping trip</span>
             <br />
             in minutes, not hours
           </h1>
@@ -46,6 +47,7 @@ export default function HomePage() {
             <LinkButton href="/auth/login" size="lg" variant="outline">
               Sign In
             </LinkButton>
+          </div>
           </div>
         </section>
 
