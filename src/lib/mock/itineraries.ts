@@ -7,8 +7,8 @@
 import { differenceInDays, addDays, format } from "date-fns";
 import type { Trip, Recommendation, PreTripTask, DayPlan, DayActivity } from "@/lib/types";
 
-// We'll use a simple UUID generator since we might not have uuid installed
-function simpleId(): string {
+// Simple unique ID generator — used for activities and pre-trip tasks
+export function simpleId(): string {
   return Math.random().toString(36).substring(2, 15);
 }
 
@@ -113,6 +113,7 @@ function generateDayActivities(
   if (dayNumber === 1) {
     return [
       {
+        id: simpleId(),
         time: "08:00",
         type: "travel",
         description: `Depart for ${recommendation.name}`,
@@ -120,6 +121,7 @@ function generateDayActivities(
         duration_minutes: 180,
       },
       {
+        id: simpleId(),
         time: "11:00",
         type: "setup",
         description: "Arrive and set up camp",
@@ -127,6 +129,7 @@ function generateDayActivities(
         duration_minutes: 60,
       },
       {
+        id: simpleId(),
         time: "12:00",
         type: "meal",
         description: "Lunch at campsite",
@@ -134,6 +137,7 @@ function generateDayActivities(
         duration_minutes: 45,
       },
       {
+        id: simpleId(),
         time: "13:00",
         type: "explore",
         description: "Explore the campground area and nearby trails",
@@ -141,6 +145,7 @@ function generateDayActivities(
         duration_minutes: 120,
       },
       {
+        id: simpleId(),
         time: "15:00",
         type: "rest",
         description: "Free time — relax, read, swim, or explore",
@@ -148,6 +153,7 @@ function generateDayActivities(
         duration_minutes: 120,
       },
       {
+        id: simpleId(),
         time: "17:00",
         type: "meal",
         description: "Prepare dinner and campfire cooking",
@@ -155,6 +161,7 @@ function generateDayActivities(
         duration_minutes: 90,
       },
       {
+        id: simpleId(),
         time: "19:00",
         type: "activity",
         description: "Campfire, stargazing, and s'mores",
@@ -168,6 +175,7 @@ function generateDayActivities(
   if (dayNumber === totalDays) {
     return [
       {
+        id: simpleId(),
         time: "07:00",
         type: "meal",
         description: "Breakfast at campsite",
@@ -175,6 +183,7 @@ function generateDayActivities(
         duration_minutes: 45,
       },
       {
+        id: simpleId(),
         time: "08:00",
         type: "setup",
         description: "Break down camp and pack up",
@@ -182,6 +191,7 @@ function generateDayActivities(
         duration_minutes: 90,
       },
       {
+        id: simpleId(),
         time: "09:30",
         type: "hike",
         description: `Final morning walk — ${recommendation.highlights[0] || "scenic trail"}`,
@@ -189,6 +199,7 @@ function generateDayActivities(
         duration_minutes: 90,
       },
       {
+        id: simpleId(),
         time: "11:00",
         type: "meal",
         description: "Quick lunch before departure",
@@ -196,6 +207,7 @@ function generateDayActivities(
         duration_minutes: 45,
       },
       {
+        id: simpleId(),
         time: "12:00",
         type: "travel",
         description: "Head home",
@@ -213,6 +225,7 @@ function generateDayActivities(
 
   return [
     {
+      id: simpleId(),
       time: "07:00",
       type: "meal",
       description: "Breakfast at campsite — camp stove cooking",
@@ -220,6 +233,7 @@ function generateDayActivities(
       duration_minutes: 45,
     },
     {
+      id: simpleId(),
       time: "08:00",
       type: "hike",
       description: `Morning hike: ${highlight}`,
@@ -227,6 +241,7 @@ function generateDayActivities(
       duration_minutes: 180,
     },
     {
+      id: simpleId(),
       time: "11:00",
       type: "rest",
       description: "Rest and refuel at camp or trailhead",
@@ -234,6 +249,7 @@ function generateDayActivities(
       duration_minutes: 60,
     },
     {
+      id: simpleId(),
       time: "12:00",
       type: "meal",
       description: "Lunch — sandwiches and snacks",
@@ -241,6 +257,7 @@ function generateDayActivities(
       duration_minutes: 45,
     },
     {
+      id: simpleId(),
       time: "13:00",
       type: "activity",
       description:
@@ -251,6 +268,7 @@ function generateDayActivities(
       duration_minutes: 150,
     },
     {
+      id: simpleId(),
       time: "15:30",
       type: "rest",
       description: "Free time — hammock, read, take photos",
@@ -258,6 +276,7 @@ function generateDayActivities(
       duration_minutes: 90,
     },
     {
+      id: simpleId(),
       time: "17:00",
       type: "meal",
       description: "Prepare dinner — grilling or camp cooking",
@@ -265,6 +284,7 @@ function generateDayActivities(
       duration_minutes: 90,
     },
     {
+      id: simpleId(),
       time: "19:00",
       type: "activity",
       description: "Sunset viewing and campfire",

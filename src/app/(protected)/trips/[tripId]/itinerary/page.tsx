@@ -75,8 +75,12 @@ export default async function ItineraryPage({
         tasks={itinerary.pre_trip_tasks as PreTripTask[]}
       />
 
-      {/* Day-by-day itinerary */}
-      <ItineraryTimeline dailyPlan={itinerary.daily_plan as DayPlan[]} />
+      {/* Day-by-day itinerary — click any activity to edit or swap it */}
+      <ItineraryTimeline
+        dailyPlan={itinerary.daily_plan as DayPlan[]}
+        itineraryId={itinerary.id}
+        recommendation={recommendation}
+      />
     </div>
   );
 }

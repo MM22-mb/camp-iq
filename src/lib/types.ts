@@ -109,6 +109,7 @@ export interface PreTripTask {
 
 /** A single activity within a day */
 export interface DayActivity {
+  id: string; // unique ID for editing/swapping individual activities
   time: string; // "08:00"
   type: "hike" | "meal" | "setup" | "activity" | "travel" | "rest" | "explore";
   description: string;
