@@ -27,7 +27,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { updateActivity, swapActivity } from "@/lib/actions/itinerary";
-import { getActivityStyle, formatDuration, ACTIVITY_TYPES } from "@/lib/activity-styles";
+import { getActivityStyle, formatDuration, formatTime12h, ACTIVITY_TYPES, timeToMinutes } from "@/lib/activity-styles";
+import { AlertTriangle } from "lucide-react";
 import type { DayActivity, Recommendation } from "@/lib/types";
 
 interface ActivityEditDialogProps {
@@ -35,6 +36,8 @@ interface ActivityEditDialogProps {
   dayNumber: number;
   itineraryId: string;
   alternatives: DayActivity[];
+  /** All activities for this day — used to check for timing overlaps */
+  dayActivities: DayActivity[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -44,6 +47,7 @@ export function ActivityEditDialog({
   dayNumber,
   itineraryId,
   alternatives,
+  dayActivities,
   open,
   onOpenChange,
 }: ActivityEditDialogProps) {
@@ -60,6 +64,39 @@ export function ActivityEditDialog({
 
   const style = getActivityStyle(activity.type);
   const Icon = style.icon;
+
+  // Check if the current edits would cause a timing overlap with adjacent activities.
+  // This gives the user a heads-up before saving — the server will auto-cascade if needed.
+  const overlapWarning = (() => {
+    const activityIndex = dayActivities.findIndex((a) => a.id === activity.id);
+    if (activityIndex === -1) return null;
+
+    const editedEnd = timeToMinutes(time) + durationMinutes;
+
+    // Check overlap with the NEXT activity
+    if (activityIndex < dayActivities.length - 1) {
+      const next = dayActivities[activityIndex + 1];
+      const nextStart = timeToMinutes(next.time);
+      if (editedEnd > nextStart) {
+        return `This will push "${next.description}" from ${formatTime12h(next.time)} to ${formatTime12h(
+          String(Math.floor(editedEnd / 60)).padStart(2, "0") + ":" + String(editedEnd % 60).padStart(2, "0")
+        )} (and may shift later activities too).`;
+      }
+    }
+
+    // Check overlap with the PREVIOUS activity
+    if (activityIndex > 0) {
+      const prev = dayActivities[activityIndex - 1];
+      const prevEnd = timeToMinutes(prev.time) + prev.duration_minutes;
+      if (timeToMinutes(time) < prevEnd) {
+        return `This overlaps with "${prev.description}" which ends at ${formatTime12h(
+          String(Math.floor(prevEnd / 60)).padStart(2, "0") + ":" + String(prevEnd % 60).padStart(2, "0")
+        )}.`;
+      }
+    }
+
+    return null;
+  })();
 
   // Reset form state when a different activity is opened
   // (React will remount if key changes, but this is a safety net)
@@ -172,6 +209,14 @@ export function ActivityEditDialog({
             </div>
           </div>
         </div>
+
+        {/* Overlap warning — shown when edits would conflict with adjacent activities */}
+        {overlapWarning && (
+          <div className="flex items-start gap-2 rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>{overlapWarning}</span>
+          </div>
+        )}
 
         <Button onClick={handleSave} disabled={isPending} className="w-full">
           {isPending ? "Saving..." : "Save Changes"}

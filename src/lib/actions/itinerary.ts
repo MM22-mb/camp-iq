@@ -5,6 +5,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { generateMockItinerary, simpleId } from "@/lib/mock/itineraries";
+import { timeToMinutes, minutesToTime } from "@/lib/activity-styles";
 import type { Trip, Recommendation, Itinerary, DayPlan, DayActivity } from "@/lib/types";
 
 /**
@@ -160,6 +161,21 @@ export async function updateActivity(
   // Merge the updates into the existing activity
   day.activities[activityIndex] = { ...day.activities[activityIndex], ...updates };
 
+  // Cascade: shift subsequent activities forward if they overlap.
+  // An activity's "end time" = its start time + duration. If the next activity
+  // starts before the current one ends, push it (and everything after) forward.
+  for (let i = activityIndex; i < day.activities.length - 1; i++) {
+    const current = day.activities[i];
+    const next = day.activities[i + 1];
+    const currentEnd = timeToMinutes(current.time) + current.duration_minutes;
+    const nextStart = timeToMinutes(next.time);
+
+    if (currentEnd > nextStart) {
+      // Overlap detected — push the next activity to start when current ends
+      next.time = minutesToTime(currentEnd);
+    }
+  }
+
   const { error } = await supabase
     .from("itineraries")
     .update({ daily_plan: dailyPlan })
@@ -207,6 +223,18 @@ export async function swapActivity(
 
   // Replace the entire activity with the new one
   day.activities[activityIndex] = newActivity;
+
+  // Cascade: shift subsequent activities forward if they overlap
+  for (let i = activityIndex; i < day.activities.length - 1; i++) {
+    const current = day.activities[i];
+    const next = day.activities[i + 1];
+    const currentEnd = timeToMinutes(current.time) + current.duration_minutes;
+    const nextStart = timeToMinutes(next.time);
+
+    if (currentEnd > nextStart) {
+      next.time = minutesToTime(currentEnd);
+    }
+  }
 
   const { error } = await supabase
     .from("itineraries")

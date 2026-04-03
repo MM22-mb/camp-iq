@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Clock, Pencil } from "lucide-react";
-import { getActivityStyle, formatDuration } from "@/lib/activity-styles";
+import { getActivityStyle, formatDuration, formatTime12h, formatFriendlyDate } from "@/lib/activity-styles";
 import { generateAlternativeActivities } from "@/lib/mock/activity-alternatives";
 import { ActivityEditDialog } from "@/components/trips/activity-edit-dialog";
 import type { DayPlan, DayActivity, Recommendation } from "@/lib/types";
@@ -66,7 +66,7 @@ export function ItineraryTimeline({
                 <TabsTrigger key={day.day_number} value={String(day.day_number)}>
                   Day {day.day_number}
                   <span className="hidden sm:inline ml-1 text-muted-foreground">
-                    — {day.date}
+                    — {formatFriendlyDate(day.date)}
                   </span>
                 </TabsTrigger>
               ))}
@@ -76,7 +76,7 @@ export function ItineraryTimeline({
               <TabsContent key={day.day_number} value={String(day.day_number)}>
                 <div className="relative">
                   {/* Vertical timeline line */}
-                  <div className="absolute left-[39px] top-0 bottom-0 w-px bg-border" />
+                  <div className="absolute left-[49px] top-0 bottom-0 w-px bg-border" />
 
                   <div className="grid gap-4">
                     {day.activities.map((activity) => {
@@ -97,9 +97,9 @@ export function ItineraryTimeline({
                             }
                           }}
                         >
-                          {/* Time label */}
-                          <div className="w-[50px] text-right text-sm text-muted-foreground pt-3 shrink-0">
-                            {activity.time}
+                          {/* Time label — displayed in 12-hour format */}
+                          <div className="w-[70px] text-right text-sm text-muted-foreground pt-3 shrink-0">
+                            {formatTime12h(activity.time)}
                           </div>
 
                           {/* Timeline dot */}
@@ -154,6 +154,9 @@ export function ItineraryTimeline({
           dayNumber={editingDayNumber}
           itineraryId={itineraryId}
           alternatives={alternatives}
+          dayActivities={
+            dailyPlan.find((d) => d.day_number === editingDayNumber)?.activities || []
+          }
           open={true}
           onOpenChange={(open) => {
             if (!open) {
