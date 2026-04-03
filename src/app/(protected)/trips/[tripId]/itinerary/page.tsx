@@ -1,16 +1,32 @@
 /**
  * Itinerary Page
  *
- * Shows the pre-trip checklist and day-by-day itinerary for a trip.
+ * Matches the Lovable app layout: back link, trip header with metadata,
+ * share button, pre-trip checklist, and stacked day cards with activities.
  */
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getTrip } from "@/lib/actions/trips";
 import { getOrCreateItinerary } from "@/lib/actions/itinerary";
 import { PreTripChecklist } from "@/components/trips/pre-trip-checklist";
 import { ItineraryTimeline } from "@/components/trips/itinerary-timeline";
-import { Badge } from "@/components/ui/badge";
-import { MapPin, Users, Calendar } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, Clock, Share2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { PreTripTask, DayPlan, Recommendation } from "@/lib/types";
+
+function formatDateRange(start: string, end: string): string {
+  const fmt = (d: string) => {
+    const date = new Date(d + "T12:00:00");
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  };
+  return `${fmt(start)}\u2013${fmt(end)}`;
+}
+
+function nightsBetween(start: string, end: string): number {
+  const s = new Date(start + "T12:00:00");
+  const e = new Date(end + "T12:00:00");
+  return Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
+}
 
 export default async function ItineraryPage({
   params,
@@ -38,35 +54,51 @@ export default async function ItineraryPage({
   }
 
   const recommendation = trip.selected_recommendation as Recommendation | null;
+  const nights =
+    trip.start_date && trip.end_date
+      ? nightsBetween(trip.start_date, trip.end_date)
+      : null;
 
   return (
     <div className="grid gap-6">
+      {/* Back link */}
+      <Link
+        href="/dashboard"
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground w-fit"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Trips
+      </Link>
+
       {/* Trip header */}
-      <div>
-        <h1 className="text-3xl font-bold">{trip.name}</h1>
-        {recommendation && (
-          <p className="text-lg text-muted-foreground mt-1">
-            {recommendation.name} — {recommendation.location}
-          </p>
-        )}
-        <div className="flex flex-wrap gap-3 mt-3">
-          {trip.destination && (
-            <Badge variant="secondary" className="gap-1">
-              <MapPin className="h-3 w-3" />
-              {trip.destination}
-            </Badge>
-          )}
-          {trip.start_date && trip.end_date && (
-            <Badge variant="secondary" className="gap-1">
-              <Calendar className="h-3 w-3" />
-              {trip.start_date} to {trip.end_date}
-            </Badge>
-          )}
-          <Badge variant="secondary" className="gap-1">
-            <Users className="h-3 w-3" />
-            {trip.party_size} {trip.party_size === 1 ? "person" : "people"}
-          </Badge>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">{trip.name}</h1>
+          <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-muted-foreground">
+            {(recommendation?.location || trip.destination) && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-4 w-4" />
+                {recommendation?.location || trip.destination}
+              </span>
+            )}
+            {trip.start_date && trip.end_date && (
+              <span className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                {formatDateRange(trip.start_date, trip.end_date)}
+              </span>
+            )}
+            {nights !== null && (
+              <span className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                {nights} {nights === 1 ? "night" : "nights"}
+              </span>
+            )}
+          </div>
         </div>
+        <Button variant="outline" className="gap-2 shrink-0">
+          <Share2 className="h-4 w-4" />
+          Share With Friends
+        </Button>
       </div>
 
       {/* Pre-trip checklist */}
@@ -75,7 +107,7 @@ export default async function ItineraryPage({
         tasks={itinerary.pre_trip_tasks as PreTripTask[]}
       />
 
-      {/* Day-by-day itinerary — click any activity to edit or swap it */}
+      {/* Day-by-day itinerary — stacked day cards with expandable activity rows */}
       <ItineraryTimeline
         dailyPlan={itinerary.daily_plan as DayPlan[]}
         itineraryId={itinerary.id}

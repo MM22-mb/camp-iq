@@ -5,8 +5,9 @@
  * by the middleware, so only logged-out users see this page.
  */
 import Link from "next/link";
-import { Trees, MapPin, Clock, Users } from "lucide-react";
+import { MapPin, Clock, Users } from "lucide-react";
 import { LinkButton } from "@/components/ui/link-button";
+import { LogoBadge } from "@/components/layout/logo-badge";
 
 export default function HomePage() {
   return (
@@ -15,7 +16,7 @@ export default function HomePage() {
       <header className="border-b">
         <div className="container flex h-14 items-center justify-between px-4 mx-auto max-w-7xl">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <Trees className="h-6 w-6 text-green-600" />
+            <LogoBadge />
             <span>Camp.IQ</span>
           </Link>
           <div className="flex items-center gap-2">

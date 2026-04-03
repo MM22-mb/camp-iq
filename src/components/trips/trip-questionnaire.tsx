@@ -425,8 +425,12 @@ export function TripQuestionnaire() {
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             ) : (
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating trip..." : "Get Recommendations"}
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-[oklch(0.65_0.12_70)] hover:bg-[oklch(0.60_0.12_70)] text-white"
+              >
+                {isSubmitting ? "Creating trip..." : "Find Destinations"}
               </Button>
             )}
           </div>

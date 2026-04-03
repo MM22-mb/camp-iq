@@ -1,15 +1,20 @@
 /**
  * OAuth Sign-In Buttons
  *
- * "use client" is needed because this component uses onClick event handlers,
- * which only work in the browser (not on the server).
+ * Renders Google sign-in button. Accepts an optional label prop
+ * so the button text can differ between login ("Sign in with Google")
+ * and signup ("Sign up with Google").
  */
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { signInWithGoogle } from "@/lib/actions/auth";
 
-export function OAuthButtons() {
+interface OAuthButtonsProps {
+  label?: string;
+}
+
+export function OAuthButtons({ label = "Continue with Google" }: OAuthButtonsProps) {
   return (
     <div className="grid gap-2">
       <Button
@@ -17,7 +22,6 @@ export function OAuthButtons() {
         className="w-full"
         onClick={() => signInWithGoogle()}
       >
-        {/* Google icon SVG */}
         <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
           <path
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
@@ -36,7 +40,7 @@ export function OAuthButtons() {
             fill="#EA4335"
           />
         </svg>
-        Continue with Google
+        {label}
       </Button>
     </div>
   );

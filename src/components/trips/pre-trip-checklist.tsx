@@ -1,9 +1,9 @@
 /**
  * Pre-Trip Checklist Component
  *
- * Displays tasks grouped by category with checkboxes.
- * Checking a task persists to the database immediately.
- * The whole checklist can be collapsed/expanded via a toggle button.
+ * Displays tasks with checkboxes and due dates, matching the Lovable app design.
+ * Tasks persist to the database when checked/unchecked.
+ * The checklist can be collapsed/expanded.
  */
 "use client";
 
@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { togglePreTripTask } from "@/lib/actions/itinerary";
 import type { PreTripTask } from "@/lib/types";
 
@@ -23,28 +23,16 @@ interface PreTripChecklistProps {
 }
 
 export function PreTripChecklist({ itineraryId, tasks }: PreTripChecklistProps) {
-  // useTransition lets us show a pending state without blocking the UI
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-
-  // Controls whether the checklist body is visible or collapsed
   const [isExpanded, setIsExpanded] = useState(true);
 
   const completedCount = tasks.filter((t) => t.completed).length;
   const progressPercent = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
 
-  // Group tasks by category
-  const grouped = tasks.reduce<Record<string, PreTripTask[]>>((acc, task) => {
-    const category = task.category || "Other";
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(task);
-    return acc;
-  }, {});
-
   function handleToggle(taskId: string) {
     startTransition(async () => {
       await togglePreTripTask(itineraryId, taskId);
-      // Refresh the page data to show the updated state
       router.refresh();
     });
   }
@@ -53,10 +41,7 @@ export function PreTripChecklist({ itineraryId, tasks }: PreTripChecklistProps) 
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <ClipboardCheck className="h-5 w-5 text-green-600" />
-            Pre-Trip Checklist
-          </CardTitle>
+          <CardTitle className="text-lg">Pre-Trip Checklist</CardTitle>
           <Button
             variant="ghost"
             size="sm"
@@ -78,39 +63,39 @@ export function PreTripChecklist({ itineraryId, tasks }: PreTripChecklistProps) 
         </div>
       </CardHeader>
 
-      {/* Collapsible content — the header/progress bar always stays visible */}
       {isExpanded && (
         <CardContent>
-          <div className="grid gap-4">
-            {Object.entries(grouped).map(([category, categoryTasks]) => (
-              <div key={category}>
-                <h4 className="text-sm font-semibold text-muted-foreground mb-2">
-                  {category}
-                </h4>
-                <div className="grid gap-2">
-                  {categoryTasks.map((task) => (
-                    <label
-                      key={task.id}
-                      className={`flex items-center gap-3 rounded-md border p-3 cursor-pointer transition-colors hover:bg-muted/50 ${
-                        task.completed ? "bg-muted/30" : ""
-                      } ${isPending ? "opacity-70" : ""}`}
-                    >
-                      <Checkbox
-                        checked={task.completed}
-                        onCheckedChange={() => handleToggle(task.id)}
-                        disabled={isPending}
-                      />
-                      <span
-                        className={`text-sm ${
-                          task.completed
-                            ? "line-through text-muted-foreground"
-                            : ""
-                        }`}
-                      >
-                        {task.task}
-                      </span>
-                    </label>
-                  ))}
+          <div className="divide-y">
+            {tasks.map((task) => (
+              <div
+                key={task.id}
+                className={`flex items-center justify-between py-3 ${
+                  isPending ? "opacity-70" : ""
+                }`}
+              >
+                <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                  <Checkbox
+                    checked={task.completed}
+                    onCheckedChange={() => handleToggle(task.id)}
+                    disabled={isPending}
+                  />
+                  <span
+                    className={`text-sm ${
+                      task.completed
+                        ? "line-through text-muted-foreground"
+                        : ""
+                    }`}
+                  >
+                    {task.task}
+                  </span>
+                </label>
+                <div className="flex items-center gap-2 shrink-0 ml-4">
+                  {task.category && (
+                    <span className="text-xs text-muted-foreground">
+                      {task.category}
+                    </span>
+                  )}
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                 </div>
               </div>
             ))}

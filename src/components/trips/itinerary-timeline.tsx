@@ -1,20 +1,17 @@
 /**
  * Itinerary Timeline Component
  *
- * Displays a day-by-day, hour-by-hour itinerary with activity cards.
- * Uses tabs to switch between days.
+ * Displays a day-by-day itinerary as stacked cards (one per day),
+ * with expandable activity rows. Matches the Lovable app design.
  *
- * Click any activity card to open the edit dialog where you can
- * change details or swap it for an alternative.
+ * Click any activity row to open the edit dialog.
  */
 "use client";
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, Pencil } from "lucide-react";
-import { getActivityStyle, formatDuration, formatTime12h, formatFriendlyDate } from "@/lib/activity-styles";
+import { ChevronDown, ChevronUp, Lightbulb, Pencil } from "lucide-react";
+import { getActivityStyle, formatDuration, formatTime12h } from "@/lib/activity-styles";
 import { generateAlternativeActivities } from "@/lib/mock/activity-alternatives";
 import { ActivityEditDialog } from "@/components/trips/activity-edit-dialog";
 import type { DayPlan, DayActivity, Recommendation } from "@/lib/types";
@@ -25,130 +22,133 @@ interface ItineraryTimelineProps {
   recommendation: Recommendation | null;
 }
 
+/** Convert a date string to a day name like "Friday" */
+function getDayName(dateStr: string): string {
+  if (!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) return dateStr;
+  const date = new Date(dateStr + "T12:00:00");
+  return date.toLocaleDateString("en-US", { weekday: "long" });
+}
+
 export function ItineraryTimeline({
   dailyPlan,
   itineraryId,
   recommendation,
 }: ItineraryTimelineProps) {
-  const [activeDay] = useState("1");
+  // Track which activity rows are expanded (shows "Why this was chosen")
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   // Track which activity is being edited (null = dialog closed)
   const [editingActivity, setEditingActivity] = useState<DayActivity | null>(null);
   const [editingDayNumber, setEditingDayNumber] = useState<number | null>(null);
 
-  // Generate alternatives when an activity is selected for editing
   const alternatives =
     editingActivity
       ? generateAlternativeActivities(editingActivity, recommendation)
       : [];
 
-  function handleActivityClick(activity: DayActivity, dayNumber: number) {
+  function toggleExpand(activityId: string) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(activityId)) {
+        next.delete(activityId);
+      } else {
+        next.add(activityId);
+      }
+      return next;
+    });
+  }
+
+  function handleEditClick(e: React.MouseEvent, activity: DayActivity, dayNumber: number) {
+    // Prevent the expand/collapse from triggering
+    e.stopPropagation();
     setEditingActivity(activity);
     setEditingDayNumber(dayNumber);
   }
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-green-600" />
-            Trip Itinerary
-            <span className="text-sm font-normal text-muted-foreground ml-auto">
-              Click an activity to edit
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue={activeDay}>
-            <TabsList className="mb-4">
-              {dailyPlan.map((day) => (
-                <TabsTrigger key={day.day_number} value={String(day.day_number)}>
-                  Day {day.day_number}
-                  <span className="hidden sm:inline ml-1 text-muted-foreground">
-                    — {formatFriendlyDate(day.date)}
-                  </span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
+      <div className="grid gap-4">
+        {dailyPlan.map((day) => (
+          <Card key={day.day_number}>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">{getDayName(day.date)}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="divide-y">
+                {day.activities.map((activity) => {
+                  const isExpanded = expandedIds.has(activity.id);
+                  const style = getActivityStyle(activity.type);
 
-            {dailyPlan.map((day) => (
-              <TabsContent key={day.day_number} value={String(day.day_number)}>
-                <div className="relative">
-                  {/* Vertical timeline line */}
-                  <div className="absolute left-[49px] top-0 bottom-0 w-px bg-border" />
+                  return (
+                    <div key={activity.id}>
+                      {/* Activity row */}
+                      <div
+                        className={`flex items-center gap-4 py-3 cursor-pointer group transition-colors hover:bg-muted/30 -mx-2 px-2 rounded-md ${
+                          isExpanded ? "bg-muted/20" : ""
+                        }`}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => toggleExpand(activity.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            toggleExpand(activity.id);
+                          }
+                        }}
+                      >
+                        {/* Amber/gold time label */}
+                        <span className="text-sm font-medium text-[oklch(0.60_0.12_70)] w-[80px] shrink-0">
+                          {formatTime12h(activity.time)}
+                        </span>
 
-                  <div className="grid gap-4">
-                    {day.activities.map((activity) => {
-                      const style = getActivityStyle(activity.type);
-                      const Icon = style.icon;
+                        {/* Description */}
+                        <span className="flex-1 text-sm">{activity.description}</span>
 
-                      return (
-                        <div
-                          key={activity.id}
-                          className="relative flex gap-4 group cursor-pointer"
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => handleActivityClick(activity, day.day_number)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              handleActivityClick(activity, day.day_number);
-                            }
-                          }}
+                        {/* Edit pencil (on hover) */}
+                        <button
+                          onClick={(e) => handleEditClick(e, activity, day.day_number)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-muted"
+                          title="Edit activity"
                         >
-                          {/* Time label — displayed in 12-hour format */}
-                          <div className="w-[70px] text-right text-sm text-muted-foreground pt-3 shrink-0">
-                            {formatTime12h(activity.time)}
-                          </div>
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
 
-                          {/* Timeline dot */}
-                          <div
-                            className={`relative z-10 mt-3 h-5 w-5 shrink-0 rounded-full ${style.bg} flex items-center justify-center`}
-                          >
-                            <div
-                              className={`h-2 w-2 rounded-full ${style.color.replace("text-", "bg-")}`}
-                            />
-                          </div>
+                        {/* Expand chevron */}
+                        {isExpanded ? (
+                          <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
+                      </div>
 
-                          {/* Activity card */}
-                          <div className="flex-1 rounded-lg border p-3 hover:bg-muted/50 transition-colors">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex items-center gap-2">
-                                <Icon className={`h-4 w-4 ${style.color}`} />
-                                <span className="font-medium text-sm">
-                                  {activity.description}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
-                                {/* Pencil icon appears on hover to hint that the card is editable */}
-                                <Pencil className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <Badge variant="secondary" className="text-xs">
-                                  {formatDuration(activity.duration_minutes)}
-                                </Badge>
-                              </div>
-                            </div>
-                            {activity.location && (
-                              <p className="text-xs text-muted-foreground mt-1 ml-6">
-                                {activity.location}
+                      {/* Expanded detail — "Why this was chosen" */}
+                      {isExpanded && (
+                        <div className="pb-3 pl-[96px]">
+                          <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <Lightbulb className="h-4 w-4 shrink-0 mt-0.5 text-amber-500" />
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground/70 mb-0.5">
+                                Why this was chosen
                               </p>
-                            )}
+                              <p>
+                                {activity.location || `${style.label} activity — ${formatDuration(activity.duration_minutes)}`}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </CardContent>
-      </Card>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
-      {/* Edit dialog — rendered outside the Card so it overlays properly */}
+      {/* Edit dialog — rendered outside the cards so it overlays properly */}
       {editingActivity && editingDayNumber !== null && (
         <ActivityEditDialog
-          // key forces React to remount the dialog with fresh state when switching activities
           key={editingActivity.id}
           activity={editingActivity}
           dayNumber={editingDayNumber}
